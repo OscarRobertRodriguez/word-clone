@@ -159,7 +159,14 @@ h1 {
   border-radius: 4px;
   padding: 8px 16px;
   outline-offset: 4px;
+  outline-color: blue;
 }
+
+
+.guess-input.guess-input {
+  outline-color: red;
+}
+
 
 .banner {
   position: fixed;
