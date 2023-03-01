@@ -7,55 +7,56 @@ import GuessResults from "../GuessResults/GuessResults";
 import { NUM_OF_GUESSES_ALLOWED } from "../../constants";
 import { checkGuess } from "../../game-helpers";
 import Banner from "../Banner/Banner";
+import GameOverBanner from "../GameOverBanner/GameOverBanner";
+import Keyboard from "../Keyboard/Keyboard";
+import WonBanner from "../WonBanner/WonBanner";
+import LostBanner from "../LostBanner/LostBanner";
 
-// Pick a random word on every pageload.
-const answer = sample(WORDS);
-// To make debugging easier, we'll log the solution in the console.
-console.info({ answer });
+
 
 function Game() {
+  const [answer, setAnswer] = React.useState(() => sample(WORDS)); 
   const [guesses, setGuesses] = React.useState([]);
-  const [solved, setSolved] = React.useState(false); 
+  const [solved, setSolved] = React.useState(false);
+  const [gameStatus, setGameStatus] = React.useState("running");
 
-  function correctAnswer(arr) {
-    let copyArr = [...arr];
-
-   let answer = copyArr
-      .map((obj) => {
-        return obj.status;
-      })
-      .every((status) => {
-        return status === "correct";
-      });
-
-      setSolved(answer) ;
-  }
 
   function handleAddGuess(label) {
-    let guess = label;
-    let formattedGuess = checkGuess(guess, answer);
-    let newArr = [...guesses, formattedGuess];
+
+    let newArr = [...guesses, label];
     if (newArr.length <= NUM_OF_GUESSES_ALLOWED) {
       setGuesses(newArr);
-      correctAnswer(formattedGuess);
     }
+    if (label.toUpperCase() === answer) {
+      setGameStatus("won");
+    } else if (newArr.length >= NUM_OF_GUESSES_ALLOWED) {
+      setGameStatus("lost");
+    }
+  }
+
+  const validatedGuesses = guesses.map(guess => checkGuess(guess, answer)); 
+
+
+  function handleRestart() {
+    const newAnswer = sample(WORDS); 
+    setAnswer(newAnswer);
+    setGuesses([]);
+    setGameStatus('running');
   }
   return (
     <>
-      <GuessResults guesses={guesses} />
+      {gameStatus}
+      <GuessResults guesses={guesses} validatedGuesses={validatedGuesses} />
       <GuessInput
         handleAddGuess={handleAddGuess}
-        guesses={guesses}
-        correctAnswer={correctAnswer}
+        gamesStatus={gameStatus}
       />
-      {
-        solved &&  <Banner status='happy' guesses={guesses} answer={answer} />
-      }
 
-      {
-        !solved  &&  guesses.length === NUM_OF_GUESSES_ALLOWED  ?  <Banner  guesses={guesses} answer={answer} />  : null
-      }
+      {gameStatus === "won" && <WonBanner numOfGuesses={guesses.length} handleRestart={handleRestart} />}
 
+      {gameStatus === "lost" && <LostBanner answer={answer} handleRestart={handleRestart} />}
+
+      <Keyboard validatedGuesses={validatedGuesses} />
     </>
   );
 }
